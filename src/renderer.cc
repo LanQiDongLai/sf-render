@@ -77,7 +77,7 @@ void Renderer::drawLine(const Point& p1, const Point& p2) {
   int surface_h = surface_->h;
   Uint32 *pixels = static_cast<Uint32 *>(surface_->pixels);
 
-  bool steep = std::abs(y2 - y1) - std::abs(x2 - x1);
+  bool steep = std::abs(y2 - y1) > std::abs(x2 - x1);
   if(steep) {
     std::swap(x1, y1);
     std::swap(x2, y2);
@@ -104,20 +104,20 @@ void Renderer::drawLine(const Point& p1, const Point& p2) {
                        (1 - t) * p1.color.g + t * p2.color.g,
                        (1 - t) * p1.color.b + t * p2.color.b);
     if(steep) {
-      int pos = y * surface_w + x;
+      int pos = x * surface_w + y;
       if(pos >= 0 && pos < surface_w * surface_h) {
-        pixels[y * surface_w + x] = mixed_color;
+        pixels[pos] = mixed_color;
       }
     }
     else {
-      int pos = x * surface_w + y;
+      int pos = y * surface_w + x;
       if(pos >= 0 && pos < surface_w * surface_h)
-        pixels[x * surface_w + y] = mixed_color;
+        pixels[pos] = mixed_color;
     }
     error -= deltay;
     if (error < 0) {
       y = y + ystep;
-      error = error + deltax;
+      error += deltax;
     }
   }
   SDL_UnlockSurface(surface_);

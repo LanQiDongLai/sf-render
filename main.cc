@@ -12,8 +12,7 @@ int main() {
 
   SDL_Surface *surface = SDL_GetWindowSurface(window);
   sf::Renderer renderer(surface);
-  renderer.drawPoint(sf::Point(10, 10, sf::Color{.r = 0, .g = 255, .b = 0}));
-  renderer.drawLine(sf::Point(0, 0, sf::Color{.r = 0, .g = 255, .b = 0}), sf::Point(200, 200, sf::Color{.r = 255, .g = 0, .b = 0}));
+  renderer.drawLine(sf::Point(-50, -50, sf::Color{.r = 0, .g = 255, .b = 0}), sf::Point(800, 400, sf::Color{.r = 255, .g = 0, .b = 0}));
 
   bool is_close = false;
   SDL_Event event;
