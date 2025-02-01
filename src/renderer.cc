@@ -152,11 +152,11 @@ void Renderer::drawLine(const Point<int>& p1, const Point<float>& uv1,
   if (steep) {
     std::swap(x1, y1);
     std::swap(x2, y2);
-    std::swap(tuv1, tuv2);
   }
   if (x1 > x2) {
     std::swap(x1, x2);
     std::swap(y1, y2);
+    std::swap(tuv1, tuv2);
   }
   int deltax = x2 - x1;
   int deltay = std::abs(y2 - y1);
@@ -275,8 +275,8 @@ void Renderer::drawTriangle(const Point<int>& p1, const Color& c1,
     drawTrapezoid(tp1.y, tp1.x, tc1, tp1.x, tc1, tp3.y, tp2.x, tc2, tp3.x, tc3);
     return;
   }
-  float t = (float)(p2.y - p1.y) / (float)(p3.y - p1.y);
-  int mid_x = (1 - t) * p1.x + t * p3.x;
+  float t = (float)(tp2.y - tp1.y) / (float)(tp3.y - tp1.y);
+  int mid_x = (1 - t) * tp1.x + t * tp3.x;
   Color mid_color{
     .r = (unsigned char)((1 - t) * tc1.r + t * tc3.r),
     .g = (unsigned char)((1 - t) * tc1.g + t * tc3.g),
@@ -290,7 +290,40 @@ void Renderer::drawTriangle(const Point<int>& p1, const Point<float>& uv1,
                             const Point<int>& p2, const Point<float>& uv2,
                             const Point<int>& p3, const Point<float>& uv3,
                             SDL_Surface* texture) {
-  
+  Point<int> tp1 = p1;
+  Point<int> tp2 = p2;
+  Point<int> tp3 = p3;
+
+  Point<float> tuv1 = uv1;
+  Point<float> tuv2 = uv2;
+  Point<float> tuv3 = uv3;
+
+  if(tp1.y > tp2.y) {
+    std::swap(tp1, tp2);
+    std::swap(tuv1, tuv2);
+  }
+  if(tp2.y > tp3.y) {
+    std::swap(tp2, tp3);
+    std::swap(tuv2, tuv3);
+  }
+  if(tp1.y > tp2.y) {
+    std::swap(tp1, tp2);
+    std::swap(tuv1, tuv2);
+  }
+
+  if(tp1.y == tp2.y) {
+    drawTrapezoid(tp1.y, tp1.x, tuv1, tp2.x, tuv2, tp3.y, tp3.x, tuv3, tp3.x, tuv3, texture);
+    return;
+  }
+  if(tp2.y == tp3.y) {
+    drawTrapezoid(tp1.y, tp1.x, tuv1, tp1.x, tuv1, tp3.y, tp2.x, tuv2, tp3.x, tuv3, texture);
+    return;
+  }
+  float t = (float)(tp2.y - tp1.y) / (float)(tp3.y - tp1.y);
+  int mid_x = (1 - t) * tp1.x + t * tp3.x;
+  Point<float> mid_uv((1 - t) * tuv1.x + t * tuv3.x, (1 - t) * tuv1.y + t * tuv3.y);
+  drawTrapezoid(tp1.y, tp1.x, tuv1, tp1.x, tuv1, tp2.y, mid_x, mid_uv, tp2.x, tuv2, texture);
+  drawTrapezoid(tp2.y, mid_x, mid_uv, tp2.x, tuv2, tp3.y, tp3.x, tuv3, tp3.x, tuv3, texture);
 }
 
 void Renderer::drawTrapezoid(int top, int top_left,

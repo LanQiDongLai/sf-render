@@ -14,11 +14,16 @@ int main() {
   SDL_Surface *surface = SDL_GetWindowSurface(window);
   SDL_Surface* texture = SDL_LoadBMP("./img/sample.bmp");
   sf::Renderer renderer(surface);
+  renderer.fillRect(sf::Point<int>(400, 400), sf::Point<int>(500, 500), sf::Color{249, 183, 67});
   renderer.drawLine(sf::Point<int>(-50, -50), sf::Point<float>(0., 0.), sf::Point<int>(800, 400),
                     sf::Point<float>(1., 1.), texture);
-  renderer.drawTriangle(sf::Point<int>(100, 0), sf::Color{255, 0, 0},
-                        sf::Point<int>(0, 100), sf::Color{0, 255, 0},
+  renderer.drawTriangle(sf::Point<int>(0, 200), sf::Color{255, 0, 0},
+                        sf::Point<int>(200, 0), sf::Color{0, 255, 0},
                         sf::Point<int>(200, 200), sf::Color{0, 0, 255});
+  renderer.drawTriangle(sf::Point<int>(0, 100), sf::Point<float>(0., 0.5),
+                        sf::Point<int>(200, 0), sf::Point<float>(1., 1.),
+                        sf::Point<int>(200, 200), sf::Point<float>(1., 0.),
+                        texture);
   bool is_close = false;
   SDL_Event event;
   while (!is_close) {
