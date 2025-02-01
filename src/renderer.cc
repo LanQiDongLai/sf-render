@@ -272,4 +272,25 @@ void Renderer::drawTrapezoid(int top, int top_left,
   }
 }
 
+void Renderer::drawTrapezoid(
+    int top, int top_left, const Point<float>& left_top_uv, int top_right,
+    const Point<float>& right_top_uv, int bottom, int bottom_left,
+    const Point<float>& left_bottom_uv, int bottom_right,
+    const Point<float>& right_bottom_uv, SDL_Surface* texture) {
+  for(int cy = top; cy <= bottom; cy++) {
+    float t = (float)(cy - top) / (float)(bottom - top);
+    Point<float> left_mixed_uv((1 - t) * left_top_uv.x + t * left_bottom_uv.x,
+                               (1 - t) * left_top_uv.y + t * left_bottom_uv.y);
+    Point<float> right_mixed_uv((1 - t) * right_top_uv.x + t * right_bottom_uv.x,
+                               (1 - t) * right_top_uv.y + t * right_bottom_uv.y);
+    int left_x = (top_left * bottom + bottom_left * cy - top_left * cy -
+                  bottom_left * top) /
+                 (bottom - top);
+    int right_x = (top_right * bottom + bottom_right * cy - top_right * cy -
+                   bottom_right * top) /
+                  (bottom - top);
+    drawLine(Point<int>{left_x, cy}, left_mixed_uv, Point<int>{right_x, cy}, right_mixed_uv, texture);
+  }
+}
+
 }  // namespace sf

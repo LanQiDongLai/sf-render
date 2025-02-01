@@ -28,6 +28,11 @@ class Renderer {
                      int bottom, int bottom_left,
                      const Color& left_bottom_color, int bottom_right,
                      const Color& right_bottom_color);
+  void drawTrapezoid(int top, int top_left, const Point<float>& left_top_uv,
+                     int top_right, const Point<float>& right_top_uv,
+                     int bottom, int bottom_left,
+                     const Point<float>& left_bottom_uv, int bottom_right,
+                     const Point<float>& right_bottom_uv, SDL_Surface* texture);
 
  private:
   Color getTextureColor(SDL_Surface* surface, int x, int y);
