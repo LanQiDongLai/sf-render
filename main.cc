@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
+#include <cstdio>
 
 #include "renderer.h"
 
@@ -11,10 +12,10 @@ int main() {
       SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
   SDL_Surface *surface = SDL_GetWindowSurface(window);
+  SDL_Surface* texture = SDL_LoadBMP("./img/sample.bmp");
   sf::Renderer renderer(surface);
-  renderer.drawLine(sf::Point(-50, -50), sf::Color{.r = 0, .g = 255, .b = 0},
-                    sf::Point(800, 400), sf::Color{.r = 255, .g = 0, .b = 0});
-
+  renderer.drawLine(sf::Point<int>(-50, -50), sf::Point<float>(0., 0.), sf::Point<int>(800, 400),
+                    sf::Point<float>(1., 1.), texture);
   bool is_close = false;
   SDL_Event event;
   while (!is_close) {
