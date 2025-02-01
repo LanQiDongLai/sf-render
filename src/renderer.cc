@@ -166,8 +166,10 @@ void Renderer::drawLine(const Point<int>& p1, const Point<float>& uv1,
     t = (float)(x - x1) / (float)(x2 - x1);
     float u = (1 - t) * uv1.x + t * uv2.x;
     float v = (1 - t) * uv1.y + t * uv2.y;
-    Color texture_color = getTextureColor(texture, u * texture->w, (1 - v) * texture->h);
-    Uint32 color = SDL_MapRGB(surface_->format, texture_color.r, texture_color.g, texture_color.b);
+    Color texture_color =
+        getTextureColor(texture, u * texture->w, (1 - v) * texture->h);
+    Uint32 color = SDL_MapRGB(surface_->format, texture_color.r,
+                              texture_color.g, texture_color.b);
     if (steep) {
       int pos = x * surface_w + y;
       if (pos >= 0 && pos < surface_w * surface_h) {
@@ -232,6 +234,42 @@ Color Renderer::getTextureColor(SDL_Surface* surface, int x, int y) {
   }
 
   return color;
+}
+
+void Renderer::drawTriangle(const Point<int>& p1, const Color& c1,
+                            const Point<int>& p2, const Color& c2,
+                            const Point<int>& p3, const Color& c3) {
+  
+}
+
+void Renderer::drawTriangle(const Point<int>& p1, const Point<float>& uv1,
+                            const Point<int>& p2, const Point<float>& uv2,
+                            const Point<int>& p3, const Point<float>& uv3) {}
+
+void Renderer::drawTrapezoid(int top, int top_left,
+                             const Color& left_top_color, int top_right,
+                             const Color& right_top_color, int bottom,
+                             int bottom_left, const Color& left_bottom_color,
+                             int bottom_right,
+                             const Color& right_bottom_color) {
+  for(int cy = top; cy <= bottom; cy++) {
+    float t = (float)(cy - top) / (float)(bottom - top);
+    Color left_mixed_color{
+        .r = (unsigned char)((1 - t) * left_top_color.r + t * left_bottom_color.r),
+        .g = (unsigned char)((1 - t) * left_top_color.g + t * left_bottom_color.g),
+        .b = (unsigned char)((1 - t) * left_top_color.b + t * left_bottom_color.b)};
+    Color right_mixed_color{
+        .r = (unsigned char)((1 - t) * right_top_color.r + t * right_bottom_color.r),
+        .g = (unsigned char)((1 - t) * right_top_color.g + t * right_bottom_color.g),
+        .b = (unsigned char)((1 - t) * right_top_color.b + t * right_bottom_color.b)};
+    int left_x = (top_left * bottom + bottom_left * cy - top_left * cy -
+                  bottom_left * top) /
+                 (bottom - top);
+    int right_x = (top_right * bottom + bottom_right * cy - top_right * cy -
+                   bottom_right * top) /
+                  (bottom - top);
+    drawLine(Point<int>{left_x, cy}, left_mixed_color, Point<int>{right_x, cy}, right_mixed_color);
+  }
 }
 
 }  // namespace sf
