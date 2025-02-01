@@ -16,14 +16,9 @@ int main() {
   sf::Renderer renderer(surface);
   renderer.drawLine(sf::Point<int>(-50, -50), sf::Point<float>(0., 0.), sf::Point<int>(800, 400),
                     sf::Point<float>(1., 1.), texture);
-  // renderer.drawTrapezoid(0, 100, sf::Color{.r = 255, .g = 0, .b = 0}, 100,
-  //                        sf::Color{.r = 255, .g = 0, .b = 0}, 200, 0,
-  //                        sf::Color{.r = 0, .g = 255, .b = 0}, 200,
-  //                        sf::Color{.r = 0, .g = 0, .b = 255});
-  renderer.drawTrapezoid(0, 0, sf::Point<float>(0., 1.), 0,
-                         sf::Point<float>(0., 1.), 200, 0,
-                         sf::Point<float>(0., 0.), 200,
-                         sf::Point<float>(1., 0.), texture);
+  renderer.drawTriangle(sf::Point<int>(100, 0), sf::Color{255, 0, 0},
+                        sf::Point<int>(0, 100), sf::Color{0, 255, 0},
+                        sf::Point<int>(200, 200), sf::Color{0, 0, 255});
   bool is_close = false;
   SDL_Event event;
   while (!is_close) {

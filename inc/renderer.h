@@ -21,8 +21,10 @@ class Renderer {
                 SDL_Surface* texture);
   void drawTriangle(const Point<int>& p1, const Color& c1, const Point<int>& p2,
                     const Color& c2, const Point<int>& p3, const Color& c3);
-  void drawTriangle(const Point<int>& p1, const Point<float>& uv1, const Point<int>& p2,
-                    const Point<float>& uv2, const Point<int>& p3, const Point<float>& uv3);
+  void drawTriangle(const Point<int>& p1, const Point<float>& uv1,
+                    const Point<int>& p2, const Point<float>& uv2,
+                    const Point<int>& p3, const Point<float>& uv3,
+                    SDL_Surface* texture);
   void drawTrapezoid(int top, int top_left, const Color& left_top_color,
                      int top_right, const Color& right_top_color,
                      int bottom, int bottom_left,
