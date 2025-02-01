@@ -6,8 +6,7 @@ namespace sf {
 struct Point {
   int x;
   int y;
-  sf::Color color;
-  Point(int x, int y, sf::Color color);
+  Point(int x, int y);
 };
 
 } // namespace sf

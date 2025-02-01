@@ -2,10 +2,9 @@
 
 namespace sf {
 
-Point::Point(int x, int y, sf::Color color) {
+Point::Point(int x, int y) {
   this->x = x;
   this->y = y;
-  this->color = color;
 }
 
 } // namespace sf
