@@ -1,6 +1,8 @@
 #pragma once
 #include <cstring>
 
+#include "vector.hpp"
+
 namespace sf {
 template <class T, int N>
 class Matrix {
@@ -36,7 +38,6 @@ class Matrix {
     Matrix inv;
     T aug[N][2 * N];
 
-    // Create augmented matrix [this | I]
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j < N; ++j) {
         aug[i][j] = data[i][j];
@@ -46,7 +47,6 @@ class Matrix {
       }
     }
 
-    // Gaussian elimination
     for (int i = 0; i < N; ++i) {
       int pivot = i;
       for (int j = i; j < N; ++j) {
@@ -88,10 +88,19 @@ class Matrix {
 
     return inv;
   }
+
+  Vector<T, N>& operator[](size_t idx) {
+    return data[idx];
+  }
+
+  const Vector<T, N>& operator[](size_t idx) const {
+    return data[idx];
+  }
+
   T* get_ptr() { return &data[0][0]; }
 
  private:
-  T data[N][N];
+  Vector<T, N> data[N];
 };
 
 }  // namespace sf
