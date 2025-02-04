@@ -4,6 +4,7 @@ namespace sf {
 
 template <class T, int N>
 class Vector {
+  friend class Matrix<T, N>;
  public:
   T* get_ptr() {
     return &data[0];

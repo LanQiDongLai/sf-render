@@ -34,6 +34,16 @@ class Matrix {
     }
     return res;
   }
+  Vector<T, N> operator*(const Vector<T, N>& vec) {
+    Vector<T, N> res;
+    for(int i = 0; i < N; i++) {
+      res.data[i] = 0;
+      for(int k = 0; k < N; k++) {
+        res.data[i] += data[i][k] * vec[j];
+      }
+    }
+    return res;
+  }
   Matrix inverse() {
     Matrix inv;
     T aug[N][2 * N];
