@@ -15,6 +15,18 @@ int main() {
   SDL_Surface *surface = SDL_GetWindowSurface(window);
   SDL_Surface* texture = SDL_LoadBMP("./img/sample.bmp");
   sf::Renderer renderer(surface);
+  renderer.setViewport(400, 300, 400, 300);
+  sf::Vertex vertex;
+  vertex.position[0] = 0.f;
+  vertex.position[1] = 0.f;
+  vertex.position[2] = 0.f;
+  vertex.position[3] = 1.f;
+
+  vertex.color[0] = 1.f;
+  vertex.color[1] = 0.f;
+  vertex.color[2] = 0.f;
+
+  renderer.drawPoint(vertex);
   bool is_close = false;
   SDL_Event event;
   while (!is_close) {

@@ -10,9 +10,9 @@ namespace sf {
 
 Renderer::Renderer(SDL_Surface* surface) { surface_ = surface; }
 
-void Renderer::setViewPort(int x, int y, int w, int h) {
+void Renderer::setViewport(int x, int y, int w, int h) {
   viewport_transform[0][0] = w / 2.;
-  viewport_transform[1][1] = h / 2.;
+  viewport_transform[1][1] = -h / 2.;
   viewport_transform[0][3] = (float)x + w / 2.;
   viewport_transform[1][3] = (float)y + h / 2.;
 }
@@ -22,22 +22,28 @@ void Renderer::setTransform(const Matrix<float, 4>& matrix) {
 }
 
 void Renderer::fillRect(const Vertex& left_top, const Vertex& right_bottom,
-                        SDL_Surface* texture) {
-}
+                        SDL_Surface* texture) {}
 
 void Renderer::drawPoint(const Vertex& point) {
+  sf::Vector<float, 4> pos_on_screen =
+      viewport_transform * transform * point.position;
+  if (pos_on_screen[0] >= surface_->w || pos_on_screen[0] < 0 ||
+      pos_on_screen[1] >= surface_->h || pos_on_screen[1] < 0) {
+    return;
+  }
+  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
+  pixels[(int)pos_on_screen[0] + (int)pos_on_screen[1] * surface_->w] =
+      SDL_MapRGB(surface_->format, 255 * point.color[0], 255 * point.color[1],
+                 255 * point.color[2]);
 }
 
-void Renderer::drawPoints(const std::vector<Vertex>& point) {
-}
+void Renderer::drawPoints(const std::vector<Vertex>& point) {}
 
 void Renderer::drawLine(const Vertex& p1, const Vertex& p2,
-                SDL_Surface* texture) {
-}
+                        SDL_Surface* texture) {}
 
-void Renderer::drawTriangle(const Vertex& p1, const Vertex& p2, const Vertex& p3,
-                    SDL_Surface* texture) {
-}
+void Renderer::drawTriangle(const Vertex& p1, const Vertex& p2,
+                            const Vertex& p3, SDL_Surface* texture) {}
 
 void Renderer::drawTrapezoid(const Vertex& left_top, const Vertex& right_top,
                              const Vertex& left_bottom,

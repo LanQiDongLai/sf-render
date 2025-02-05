@@ -14,7 +14,6 @@ class Vector {
   const T& operator[](size_t idx) const {
     return data[idx];
   }
- private:
   T data[N];
 };
 
