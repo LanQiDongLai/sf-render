@@ -37,7 +37,20 @@ void Renderer::drawPoint(const Vertex& point) {
                  255 * point.color[2]);
 }
 
-void Renderer::drawPoints(const std::vector<Vertex>& point) {}
+void Renderer::drawPoints(const std::vector<Vertex>& points) {
+  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
+  for (const auto& point : points) {
+    sf::Vector<float, 4> pos_on_screen =
+        viewport_transform * transform * point.position;
+    if (pos_on_screen[0] >= surface_->w || pos_on_screen[0] < 0 ||
+        pos_on_screen[1] >= surface_->h || pos_on_screen[1] < 0) {
+      return;
+    }
+    pixels[(int)pos_on_screen[0] + (int)pos_on_screen[1] * surface_->w] =
+        SDL_MapRGB(surface_->format, 255 * point.color[0], 255 * point.color[1],
+                   255 * point.color[2]);
+  }
+}
 
 void Renderer::drawLine(const Vertex& p1, const Vertex& p2,
                         SDL_Surface* texture) {}
