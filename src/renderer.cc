@@ -53,7 +53,67 @@ void Renderer::drawPoints(const std::vector<Vertex>& points) {
 }
 
 void Renderer::drawLine(const Vertex& p1, const Vertex& p2,
-                        SDL_Surface* texture) {}
+                        SDL_Surface* texture) {
+  auto pos1 = viewport_transform * transform * p1.position;
+  auto pos2 = viewport_transform * transform * p2.position;
+  auto uv1 = p1.texcoord;
+  int x1 = pos1[0] / pos1[3];
+  int y1 = pos1[1] / pos1[3];
+  int x2 = pos2[0] / pos2[3];
+  int y2 = pos2[1] / pos2[3];
+
+  float rz1 = p1.position[2];
+  float rz2 = p2.position[2];
+
+  int surface_w = surface_->w;
+  int surface_h = surface_->h;
+  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
+
+  bool steep = std::abs(y2 - y1) > std::abs(x2 - x1);
+  if (steep) {
+    std::swap(x1, y1);
+    std::swap(x2, y2);
+  }
+  if (x1 > x2) {
+    std::swap(x1, x2);
+    std::swap(y1, y2);
+    std::swap(rz1, rz2);
+  }
+  int deltax = x2 - x1;
+  int deltay = std::abs(y2 - y1);
+  int error = deltax / 2;
+  int ystep;
+  int y = y1;
+  if (y1 < y2) {
+    ystep = 1;
+  } else {
+    ystep = -1;
+  }
+  float t = 0;
+  for (int x = x1; x <= x2; x++) {
+    t = (float)(x - x1) / (float)(x2 - x1);
+    float rz = rz1 * rz2 / ((1 - t) * rz2 + t * rz1);
+    Uint32 mixed_color = SDL_MapRGB(
+        surface_->format,
+        255 * rz * ((1 - t) * p1.color[0] / rz1 + t * p2.color[0] / rz2),
+        255 * rz * ((1 - t) * p1.color[1] / rz1 + t * p2.color[1] / rz2),
+        255 * rz * ((1 - t) * p1.color[2] / rz1 + t * p1.color[2] / rz2));
+    if (steep) {
+      int pos = x * surface_w + y;
+      if (pos >= 0 && pos < surface_w * surface_h) {
+        pixels[pos] = mixed_color;
+      }
+    } else {
+      int pos = y * surface_w + x;
+      if (pos >= 0 && pos < surface_w * surface_h) pixels[pos] = mixed_color;
+    }
+    error -= deltay;
+    if (error < 0) {
+      y = y + ystep;
+      error += deltax;
+    }
+  }
+}
 
 void Renderer::drawTriangle(const Vertex& p1, const Vertex& p2,
                             const Vertex& p3, SDL_Surface* texture) {}
