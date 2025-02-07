@@ -116,11 +116,61 @@ void Renderer::drawLine(const Vertex& p1, const Vertex& p2,
 }
 
 void Renderer::drawTriangle(const Vertex& p1, const Vertex& p2,
-                            const Vertex& p3, SDL_Surface* texture) {}
+                            const Vertex& p3, SDL_Surface* texture) {
+  
+}
 
 void Renderer::drawTrapezoid(const Vertex& left_top, const Vertex& right_top,
                              const Vertex& left_bottom,
                              const Vertex& right_bottom, SDL_Surface* texture) {
+  Uint32 *pixels = static_cast<Uint32 *>(surface_->pixels);
+  auto pos_left_top = viewport_transform * transform * left_top.position;
+  auto pos_right_top = viewport_transform * transform * right_top.position;
+  auto pos_left_bottom = viewport_transform * transform * left_bottom.position;
+  auto pos_right_bottom = viewport_transform * transform * right_bottom.position;
+
+  int pos_top = pos_left_top[1] / pos_left_top[3];
+  int pos_bottom = pos_left_bottom[1] / pos_left_bottom[3];
+
+  float left_top_rz = left_top.position[2] / left_top.position[3];
+  float left_bottom_rz = left_bottom.position[2] / left_bottom.position[3];
+  float right_top_rz = right_top.position[2] / right_top.position[3];
+  float right_bottom_rz = right_bottom.position[2] / right_bottom.position[3];
+
+  int pos_left_top_x = pos_left_top[0] / pos_left_top[3];
+  int pos_right_top_x = pos_right_top[0] / pos_right_top[3];
+  int pos_left_bottom_x = pos_left_bottom[0] / pos_left_bottom[3];
+  int pos_right_bottom_x = pos_right_bottom[0] / pos_right_bottom[3];
+  for(int cy = pos_top; cy <= pos_bottom; cy++) {
+    float t1 = (float)(cy - pos_top) / (float)(pos_bottom - pos_top);
+    int left_x = (pos_left_top_x * pos_bottom + pos_left_bottom_x * cy -
+                  pos_left_top_x * cy - pos_left_bottom_x * pos_top) /
+                 (pos_bottom - pos_top);
+    int right_x = (pos_right_top_x * pos_bottom + pos_right_bottom_x * cy - pos_right_top_x * cy -
+                pos_right_bottom_x * pos_top) /
+              (pos_bottom - pos_top);
+    float left_rz = left_bottom_rz * left_top_rz /
+                    (left_bottom_rz * (1 - t1) + left_top_rz * t1);
+    sf::Vector<float, 3> left_mixed_color =
+        left_top.color * (1 - t1) / left_top_rz * left_rz +
+        left_bottom.color * t1 / left_bottom_rz * left_rz;
+    float right_rz = right_bottom_rz * right_top_rz /
+                     (right_bottom_rz * (1 - t1) + right_top_rz * t1);
+    sf::Vector<float, 3> right_mixed_color =
+        right_top.color * (1 - t1) / right_top_rz * right_rz +
+        right_bottom.color * t1 / right_bottom_rz * right_rz;
+    for(int cx = left_x; cx <= right_x; cx++) {
+      float t2 = (float)(cx - left_x) / (float)(right_x - left_x);
+      float rz = left_rz * right_rz / (left_rz * t2 + right_rz * (1 - t2));
+      sf::Vector<float, 3> color = left_mixed_color * (1 - t2) / left_rz * rz +
+                                   right_mixed_color * t2 / right_rz * rz;
+      pixels[cy * surface_->w + cx] = SDL_MapRGB(surface_->format,
+        255 * color[0],
+        255 * color[1],
+        255 * color[2]
+      );
+    }
+  }
 }
 
 Color Renderer::getTextureColor(SDL_Surface* surface, int x, int y) {
