@@ -28,8 +28,8 @@ int main() {
 
   renderer.setTransform(transform);
   sf::Vertex v1;
-  v1.position[0] = 0.f;
-  v1.position[1] = 0.5f;
+  v1.position[0] = -0.5f;
+  v1.position[1] = -0.5f;
   v1.position[2] = -1.f;
   v1.position[3] = 1.f;
 
@@ -37,9 +37,12 @@ int main() {
   v1.color[1] = 0.f;
   v1.color[2] = 0.f;
 
+  v1.texcoord[0] = 0.f;
+  v1.texcoord[1] = 0.f;
+
   sf::Vertex v2;
-  v2.position[0] = 0.f;
-  v2.position[1] = 0.5f;
+  v2.position[0] = 0.5f;
+  v2.position[1] = -0.5f;
   v2.position[2] = -1.f;
   v2.position[3] = 1.f;
 
@@ -47,9 +50,12 @@ int main() {
   v2.color[1] = 0.f;
   v2.color[2] = 0.f;
 
+  v2.texcoord[0] = 1.f;
+  v2.texcoord[1] = 0.f;
+
   sf::Vertex v3;
   v3.position[0] = -0.5f;
-  v3.position[1] = -0.5f;
+  v3.position[1] = 0.5f;
   v3.position[2] = -1.f;
   v3.position[3] = 1.f;
 
@@ -57,16 +63,24 @@ int main() {
   v3.color[1] = 1.f;
   v3.color[2] = 0.f;
 
+  v3.texcoord[0] = 0.f;
+  v3.texcoord[1] = 1.f;
+
   sf::Vertex v4;
   v4.position[0] = 0.5f;
-  v4.position[1] = -0.5f;
+  v4.position[1] = 0.5f;
   v4.position[2] = -1.f;
   v4.position[3] = 1.f;
 
   v4.color[0] = 0.f;
   v4.color[1] = 0.f;
   v4.color[2] = 1.f;
-  renderer.fillTriangle(v1, v3, v4, texture);
+
+  v4.texcoord[0] = 1.f;
+  v4.texcoord[1] = 1.f;
+
+  renderer.fillTriangle(v1, v2, v3, texture);
+  renderer.fillTriangle(v3, v2, v4, texture);
   bool is_close = false;
   SDL_Event event;
   while (!is_close) {

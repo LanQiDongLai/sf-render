@@ -108,11 +108,19 @@ void Renderer::drawLine(const Vertex& p1, const Vertex& p2,
   for (int x = x1; x <= x2; x++) {
     t = (float)(x - x1) / (float)(x2 - x1);
     float rz = rz1 * rz2 / ((1 - t) * rz2 + t * rz1);
-    Uint32 mixed_color = SDL_MapRGB(
-        surface_->format,
-        255 * rz * ((1 - t) * sp1.color[0] / rz1 + t * sp2.color[0] / rz2),
-        255 * rz * ((1 - t) * sp1.color[1] / rz1 + t * sp2.color[1] / rz2),
-        255 * rz * ((1 - t) * sp1.color[2] / rz1 + t * sp2.color[2] / rz2));
+    Uint32 mixed_color;
+    if(texture == nullptr) {
+      mixed_color = SDL_MapRGB(
+          surface_->format,
+          255 * rz * ((1 - t) * sp1.color[0] / rz1 + t * sp2.color[0] / rz2),
+          255 * rz * ((1 - t) * sp1.color[1] / rz1 + t * sp2.color[1] / rz2),
+          255 * rz * ((1 - t) * sp1.color[2] / rz1 + t * sp2.color[2] / rz2));
+    } else {
+      float u = rz * ((1 - t) * sp1.texcoord[0] / rz1 + t * sp2.texcoord[0] / rz2);
+      float v = rz * ((1 - t) * sp1.texcoord[1] / rz1 + t * sp2.texcoord[1] / rz2);
+      auto color = getTextureColor(texture, u * texture->w, v * texture->h);
+      mixed_color = SDL_MapRGB(surface_->format, color.r, color.g, color.b);
+    }
     if (steep) {
       int pos = x * surface_w + y;
       if (pos >= 0 && pos < surface_w * surface_h) {
@@ -201,7 +209,9 @@ void Renderer::fillTriangle(const Vertex& p1, const Vertex& p2,
                                  screen_p2[1], cx, cy) /
                     area;
       float rz = 1. / (alpha / rz1 + beta / rz2 + gamma / rz3);
-      Uint32 mixed_color = SDL_MapRGB(
+      Uint32 mixed_color;
+      if(texture == nullptr) {
+        mixed_color = SDL_MapRGB(
           surface_->format,
           255 * rz *
               ((alpha / rz1) * sp1.color[0] + (beta / rz2) * sp2.color[0] +
@@ -212,6 +222,16 @@ void Renderer::fillTriangle(const Vertex& p1, const Vertex& p2,
           255 * rz *
               ((alpha / rz1) * sp1.color[2] + (beta / rz2) * sp2.color[2] +
                (gamma / rz3) * sp3.color[2]));
+      } else {
+        float u = rz * ((alpha / rz1) * sp1.texcoord[0] +
+                      (beta / rz2) * sp2.texcoord[0] +
+                      (gamma / rz3) * sp3.texcoord[0]);
+        float v = rz * ((alpha / rz1) * sp1.texcoord[1] +
+                      (beta / rz2) * sp2.texcoord[1] +
+                      (gamma / rz3) * sp3.texcoord[1]);
+        auto color = getTextureColor(texture, u * texture->w, (1 - v) * texture->h);
+        mixed_color = SDL_MapRGB(surface_->format, color.r, color.g, color.b);
+      }
       pixels[cx + cy * surface_->w] = mixed_color;
     }
   }
