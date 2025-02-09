@@ -66,7 +66,7 @@ int main() {
   v4.color[0] = 0.f;
   v4.color[1] = 0.f;
   v4.color[2] = 1.f;
-  renderer.drawTrapezoid(v1, v2, v3, v4, nullptr);
+  renderer.fillTriangle(v1, v3, v4, texture);
   bool is_close = false;
   SDL_Event event;
   while (!is_close) {
