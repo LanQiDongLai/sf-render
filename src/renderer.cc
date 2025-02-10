@@ -4,100 +4,94 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 
 namespace sf {
 
 Renderer::Renderer(SDL_Surface* surface) { surface_ = surface; }
 
-void Renderer::fillRect(const Point<int>& left_top,
-                        const Point<int>& right_bottom, const Color& color) {
-  SDL_LockSurface(surface_);
-  int surface_w = surface_->w;
-  int surface_h = surface_->h;
-  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
+void Renderer::setViewport(int x, int y, int w, int h) {
+  viewport_transform[0][0] = w / 2.;
+  viewport_transform[1][1] = -h / 2.;
+  viewport_transform[0][3] = (float)x + w / 2.;
+  viewport_transform[1][3] = (float)y + h / 2.;
+}
 
-  if (left_top.x >= surface_w || left_top.y >= surface_h ||
-      right_bottom.x < 0 || right_bottom.y < 0) {
-    SDL_UnlockSurface(surface_);
+void Renderer::setTransform(const Matrix<float, 4>& matrix) {
+  transform = matrix;
+}
+
+void Renderer::fillRect(const Vertex& left_top, const Vertex& right_bottom,
+                        SDL_Surface* texture) {}
+
+void Renderer::drawPoint(const Vertex& point) {
+  sf::Vector<float, 4> pos_on_screen =
+      viewport_transform * transform * point.position;
+  if (pos_on_screen[0] >= surface_->w || pos_on_screen[0] < 0 ||
+      pos_on_screen[1] >= surface_->h || pos_on_screen[1] < 0) {
     return;
   }
-  int right_bound =
-      right_bottom.x >= surface_w ? surface_w - 1 : right_bottom.x;
-  int bottom_bound =
-      right_bottom.y >= surface_h ? surface_h - 1 : right_bottom.y;
-  int left_bound = left_top.x < 0 ? 0 : left_top.x;
-  int top_bound = left_top.y < 0 ? 0 : left_top.y;
-  for (int i = left_bound; i <= right_bound; i++) {
-    for (int j = top_bound; j <= bottom_bound; j++) {
-      pixels[j * surface_w + i] =
-          SDL_MapRGB(surface_->format, color.r, color.g, color.b);
+  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
+  pixels[(int)pos_on_screen[0] + (int)pos_on_screen[1] * surface_->w] =
+      SDL_MapRGB(surface_->format, 255 * point.color[0], 255 * point.color[1],
+                 255 * point.color[2]);
+}
+
+void Renderer::drawPoints(const std::vector<Vertex>& points) {
+  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
+  for (const auto& point : points) {
+    sf::Vector<float, 4> pos_on_screen =
+        viewport_transform * transform * point.position;
+    if (pos_on_screen[0] >= surface_->w || pos_on_screen[0] < 0 ||
+        pos_on_screen[1] >= surface_->h || pos_on_screen[1] < 0) {
+      return;
     }
+    pixels[(int)pos_on_screen[0] + (int)pos_on_screen[1] * surface_->w] =
+        SDL_MapRGB(surface_->format, 255 * point.color[0], 255 * point.color[1],
+                   255 * point.color[2]);
   }
-  SDL_UnlockSurface(surface_);
 }
 
-void Renderer::drawPoint(const Point<int>& point, const Color& color) {
-  SDL_LockSurface(surface_);
+void Renderer::drawLine(const Vertex& p1, const Vertex& p2,
+                        SDL_Surface* texture) {
+  auto sp1 = p1;
+  auto sp2 = p2;
+  auto transformed_p1 = transform * p1.position;
+  auto transformed_p2 = transform * p2.position;
+
+  auto screen_p1 = viewport_transform * transformed_p1;
+  screen_p1[0] /= screen_p1[3];
+  screen_p1[1] /= screen_p1[3];
+  screen_p1[2] /= screen_p1[3];
+  screen_p1[3] /= screen_p1[3];
+  auto screen_p2 = viewport_transform * transformed_p2;
+  screen_p2[0] /= screen_p2[3];
+  screen_p2[1] /= screen_p2[3];
+  screen_p2[2] /= screen_p2[3];
+  screen_p2[3] /= screen_p2[3];
 
   int surface_w = surface_->w;
   int surface_h = surface_->h;
   Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
 
-  if (point.x >= surface_w || point.y >= surface_h || point.x < 0 ||
-      point.y < 0) {
-    SDL_UnlockSurface(surface_);
-    return;
-  }
-  pixels[point.y * surface_w + point.x] =
-      SDL_MapRGB(surface_->format, color.r, color.g, color.b);
-  SDL_UnlockSurface(surface_);
-}
-
-void Renderer::drawPoints(const Point<int>* points, const Color* colors,
-                          int count) {
-  SDL_LockSurface(surface_);
-
-  int surface_w = surface_->w;
-  int surface_h = surface_->h;
-  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
-  for (int i = 0; i < count; i++) {
-    const Point<int>& point = points[i];
-    const Color& color = colors[i];
-    if (point.x >= surface_w || point.y >= surface_h || point.x < 0 ||
-        point.y < 0) {
-      continue;
-    }
-    pixels[point.y * surface_w + point.x] =
-        SDL_MapRGB(surface_->format, color.r, color.g, color.b);
-  }
-  SDL_UnlockSurface(surface_);
-}
-
-void Renderer::drawLine(const Point<int>& p1, const Color& c1,
-                        const Point<int>& p2, const Color& c2) {
-  int x1 = p1.x;
-  int y1 = p1.y;
-  int x2 = p2.x;
-  int y2 = p2.y;
-  Color tc1 = c1;
-  Color tc2 = c2;
-
-  SDL_LockSurface(surface_);
-  int surface_w = surface_->w;
-  int surface_h = surface_->h;
-  Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
-
-  bool steep = std::abs(y2 - y1) > std::abs(x2 - x1);
+  bool steep = std::abs(screen_p2[1] - screen_p1[1]) >
+               std::abs(screen_p2[0] - screen_p1[0]);
   if (steep) {
-    std::swap(x1, y1);
-    std::swap(x2, y2);
+    std::swap(screen_p1[0], screen_p1[1]);
+    std::swap(screen_p2[0], screen_p2[1]);
   }
-  if (x1 > x2) {
-    std::swap(x1, x2);
-    std::swap(y1, y2);
-    std::swap(tc1, tc2);
+  if (screen_p1[0] > screen_p2[0]) {
+    std::swap(screen_p1, screen_p2);
+    std::swap(transformed_p1, transformed_p2);
+    std::swap(sp1, sp2);
   }
+
+  int x1 = screen_p1[0];
+  int y1 = screen_p1[1];
+  int x2 = screen_p2[0];
+  int y2 = screen_p2[1];
+
   int deltax = x2 - x1;
   int deltay = std::abs(y2 - y1);
   int error = deltax / 2;
@@ -109,11 +103,24 @@ void Renderer::drawLine(const Point<int>& p1, const Color& c1,
     ystep = -1;
   }
   float t = 0;
+  float rz1 = transformed_p1[3];
+  float rz2 = transformed_p2[3];
   for (int x = x1; x <= x2; x++) {
     t = (float)(x - x1) / (float)(x2 - x1);
-    Uint32 mixed_color =
-        SDL_MapRGB(surface_->format, (1 - t) * tc1.r + t * tc2.r,
-                   (1 - t) * tc1.g + t * tc2.g, (1 - t) * tc1.b + t * tc2.b);
+    float rz = rz1 * rz2 / ((1 - t) * rz2 + t * rz1);
+    Uint32 mixed_color;
+    if(texture == nullptr) {
+      mixed_color = SDL_MapRGB(
+          surface_->format,
+          255 * rz * ((1 - t) * sp1.color[0] / rz1 + t * sp2.color[0] / rz2),
+          255 * rz * ((1 - t) * sp1.color[1] / rz1 + t * sp2.color[1] / rz2),
+          255 * rz * ((1 - t) * sp1.color[2] / rz1 + t * sp2.color[2] / rz2));
+    } else {
+      float u = rz * ((1 - t) * sp1.texcoord[0] / rz1 + t * sp2.texcoord[0] / rz2);
+      float v = rz * ((1 - t) * sp1.texcoord[1] / rz1 + t * sp2.texcoord[1] / rz2);
+      auto color = getTextureColor(texture, u * texture->w, v * texture->h);
+      mixed_color = SDL_MapRGB(surface_->format, color.r, color.g, color.b);
+    }
     if (steep) {
       int pos = x * surface_w + y;
       if (pos >= 0 && pos < surface_w * surface_h) {
@@ -129,72 +136,105 @@ void Renderer::drawLine(const Point<int>& p1, const Color& c1,
       error += deltax;
     }
   }
-  SDL_UnlockSurface(surface_);
 }
 
-void Renderer::drawLine(const Point<int>& p1, const Point<float>& uv1,
-                        const Point<int>& p2, const Point<float>& uv2,
-                        SDL_Surface* texture) {
-  int x1 = p1.x;
-  int y1 = p1.y;
-  int x2 = p2.x;
-  int y2 = p2.y;
+void Renderer::drawTriangle(const Vertex& p1, const Vertex& p2,
+                            const Vertex& p3, SDL_Surface* texture) {
+  drawLine(p1, p2, texture);
+  drawLine(p2, p3, texture);
+  drawLine(p3, p1, texture);
+}
 
-  Point<float> tuv1 = uv1;
-  Point<float> tuv2 = uv2;
+void Renderer::fillTriangle(const Vertex& p1, const Vertex& p2,
+                            const Vertex& p3, SDL_Surface* texture) {
+  auto sp1 = p1;
+  auto sp2 = p2;
+  auto sp3 = p3;
 
-  SDL_LockSurface(surface_);
-  int surface_w = surface_->w;
-  int surface_h = surface_->h;
   Uint32* pixels = static_cast<Uint32*>(surface_->pixels);
 
-  bool steep = std::abs(y2 - y1) > std::abs(x2 - x1);
-  if (steep) {
-    std::swap(x1, y1);
-    std::swap(x2, y2);
-  }
-  if (x1 > x2) {
-    std::swap(x1, x2);
-    std::swap(y1, y2);
-    std::swap(tuv1, tuv2);
-  }
-  int deltax = x2 - x1;
-  int deltay = std::abs(y2 - y1);
-  int error = deltax / 2;
-  int ystep;
-  int y = y1;
-  if (y1 < y2) {
-    ystep = 1;
-  } else {
-    ystep = -1;
-  }
-  float t = 0;
-  for (int x = x1; x <= x2; x++) {
-    t = (float)(x - x1) / (float)(x2 - x1);
-    float u = (1 - t) * tuv1.x + t * tuv2.x;
-    float v = (1 - t) * tuv1.y + t * tuv2.y;
-    Color texture_color =
-        getTextureColor(texture, u * texture->w, (1 - v) * texture->h);
-    Uint32 color = SDL_MapRGB(surface_->format, texture_color.r,
-                              texture_color.g, texture_color.b);
-    if (steep) {
-      int pos = x * surface_w + y;
-      if (pos >= 0 && pos < surface_w * surface_h) {
-        pixels[pos] = color;
+  auto transformed_p1 = transform * sp1.position;
+  auto transformed_p2 = transform * sp2.position;
+  auto transformed_p3 = transform * sp3.position;
+
+  float rz1 = transformed_p1[3];
+  float rz2 = transformed_p2[3];
+  float rz3 = transformed_p3[3];
+
+  auto screen_p1 = viewport_transform * transformed_p1;
+  screen_p1[0] /= screen_p1[3];
+  screen_p1[1] /= screen_p1[3];
+  screen_p1[2] /= screen_p1[3];
+  screen_p1[3] /= screen_p1[3];
+  auto screen_p2 = viewport_transform * transformed_p2;
+  screen_p2[0] /= screen_p2[3];
+  screen_p2[1] /= screen_p2[3];
+  screen_p2[2] /= screen_p2[3];
+  screen_p2[3] /= screen_p2[3];
+  auto screen_p3 = viewport_transform * transformed_p3;
+  screen_p3[0] /= screen_p3[3];
+  screen_p3[1] /= screen_p3[3];
+  screen_p3[2] /= screen_p3[3];
+  screen_p3[3] /= screen_p3[3];
+
+  float top = std::min(std::min(screen_p1[1], screen_p2[1]), screen_p3[1]);
+  float bottom = std::max(std::max(screen_p1[1], screen_p2[1]), screen_p3[1]);
+  float left = std::min(std::min(screen_p1[0], screen_p2[0]), screen_p3[0]);
+  float right = std::max(std::max(screen_p1[0], screen_p2[0]), screen_p3[0]);
+
+  float area = caculateArea(screen_p1[0], screen_p1[1], screen_p2[0],
+                            screen_p2[1], screen_p3[0], screen_p3[1]);
+  if (area < 0.00001f) return;
+
+  for (int cy = top; cy <= bottom; cy++) {
+    for (int cx = left; cx <= right; cx++) {
+      if (cx < 0 || cy < 0 || cx >= surface_->w || cy >= surface_->h) continue;
+      bool b1 = (cx - screen_p1[0]) * (screen_p2[1] - screen_p1[1]) -
+                    (cy - screen_p1[1]) * (screen_p2[0] - screen_p1[0]) >
+                0;
+      bool b2 = (cx - screen_p2[0]) * (screen_p3[1] - screen_p2[1]) -
+                    (cy - screen_p2[1]) * (screen_p3[0] - screen_p2[0]) >
+                0;
+      bool b3 = (cx - screen_p3[0]) * (screen_p1[1] - screen_p3[1]) -
+                    (cy - screen_p3[1]) * (screen_p1[0] - screen_p3[0]) >
+                0;
+      if (!(b1 && b2 && b3)) continue;
+      float alpha = caculateArea(cx, cy, screen_p2[0], screen_p2[1],
+                                 screen_p3[0], screen_p3[1]) /
+                    area;
+      float beta = caculateArea(screen_p1[0], screen_p1[1], cx, cy,
+                                screen_p3[0], screen_p3[1]) /
+                   area;
+      float gamma = caculateArea(screen_p1[0], screen_p1[1], screen_p2[0],
+                                 screen_p2[1], cx, cy) /
+                    area;
+      float rz = 1. / (alpha / rz1 + beta / rz2 + gamma / rz3);
+      Uint32 mixed_color;
+      if(texture == nullptr) {
+        mixed_color = SDL_MapRGB(
+          surface_->format,
+          255 * rz *
+              ((alpha / rz1) * sp1.color[0] + (beta / rz2) * sp2.color[0] +
+               (gamma / rz3) * sp3.color[0]),
+          255 * rz *
+              ((alpha / rz1) * sp1.color[1] + (beta / rz2) * sp2.color[1] +
+               (gamma / rz3) * sp3.color[1]),
+          255 * rz *
+              ((alpha / rz1) * sp1.color[2] + (beta / rz2) * sp2.color[2] +
+               (gamma / rz3) * sp3.color[2]));
+      } else {
+        float u = rz * ((alpha / rz1) * sp1.texcoord[0] +
+                      (beta / rz2) * sp2.texcoord[0] +
+                      (gamma / rz3) * sp3.texcoord[0]);
+        float v = rz * ((alpha / rz1) * sp1.texcoord[1] +
+                      (beta / rz2) * sp2.texcoord[1] +
+                      (gamma / rz3) * sp3.texcoord[1]);
+        auto color = getTextureColor(texture, u * texture->w, (1 - v) * texture->h);
+        mixed_color = SDL_MapRGB(surface_->format, color.r, color.g, color.b);
       }
-    } else {
-      int pos = y * surface_w + x;
-      if (pos >= 0 && pos < surface_w * surface_h) {
-        pixels[pos] = color;
-      }
-    }
-    error -= deltay;
-    if (error < 0) {
-      y = y + ystep;
-      error += deltax;
+      pixels[cx + cy * surface_->w] = mixed_color;
     }
   }
-  SDL_UnlockSurface(surface_);
 }
 
 Color Renderer::getTextureColor(SDL_Surface* surface, int x, int y) {
@@ -243,134 +283,10 @@ Color Renderer::getTextureColor(SDL_Surface* surface, int x, int y) {
   return color;
 }
 
-void Renderer::drawTriangle(const Point<int>& p1, const Color& c1,
-                            const Point<int>& p2, const Color& c2,
-                            const Point<int>& p3, const Color& c3) {
-  Point<int> tp1 = p1;
-  Point<int> tp2 = p2;
-  Point<int> tp3 = p3;
-
-  Color tc1 = c1;
-  Color tc2 = c2;
-  Color tc3 = c3;
-
-  if(tp1.y > tp2.y) {
-    std::swap(tp1, tp2);
-    std::swap(tc1, tc2);
-  }
-  if(tp2.y > tp3.y) {
-    std::swap(tp2, tp3);
-    std::swap(tc2, tc3);
-  }
-  if(tp1.y > tp2.y) {
-    std::swap(tp1, tp2);
-    std::swap(tc1, tc2);
-  }
-
-  if(tp1.y == tp2.y) {
-    drawTrapezoid(tp1.y, tp1.x, tc1, tp2.x, tc2, tp3.y, tp3.x, tc3, tp3.x, tc3);
-    return;
-  }
-  if(tp2.y == tp3.y) {
-    drawTrapezoid(tp1.y, tp1.x, tc1, tp1.x, tc1, tp3.y, tp2.x, tc2, tp3.x, tc3);
-    return;
-  }
-  float t = (float)(tp2.y - tp1.y) / (float)(tp3.y - tp1.y);
-  int mid_x = (1 - t) * tp1.x + t * tp3.x;
-  Color mid_color{
-    .r = (unsigned char)((1 - t) * tc1.r + t * tc3.r),
-    .g = (unsigned char)((1 - t) * tc1.g + t * tc3.g),
-    .b = (unsigned char)((1 - t) * tc1.b + t * tc3.b) 
-  };
-  drawTrapezoid(tp1.y, tp1.x, tc1, tp1.x, tc1, tp2.y, mid_x, mid_color, tp2.x, tc2);
-  drawTrapezoid(tp2.y, mid_x, mid_color, tp2.x, tc2, tp3.y, tp3.x, tc3, tp3.x, tc3);
-}
-
-void Renderer::drawTriangle(const Point<int>& p1, const Point<float>& uv1,
-                            const Point<int>& p2, const Point<float>& uv2,
-                            const Point<int>& p3, const Point<float>& uv3,
-                            SDL_Surface* texture) {
-  Point<int> tp1 = p1;
-  Point<int> tp2 = p2;
-  Point<int> tp3 = p3;
-
-  Point<float> tuv1 = uv1;
-  Point<float> tuv2 = uv2;
-  Point<float> tuv3 = uv3;
-
-  if(tp1.y > tp2.y) {
-    std::swap(tp1, tp2);
-    std::swap(tuv1, tuv2);
-  }
-  if(tp2.y > tp3.y) {
-    std::swap(tp2, tp3);
-    std::swap(tuv2, tuv3);
-  }
-  if(tp1.y > tp2.y) {
-    std::swap(tp1, tp2);
-    std::swap(tuv1, tuv2);
-  }
-
-  if(tp1.y == tp2.y) {
-    drawTrapezoid(tp1.y, tp1.x, tuv1, tp2.x, tuv2, tp3.y, tp3.x, tuv3, tp3.x, tuv3, texture);
-    return;
-  }
-  if(tp2.y == tp3.y) {
-    drawTrapezoid(tp1.y, tp1.x, tuv1, tp1.x, tuv1, tp3.y, tp2.x, tuv2, tp3.x, tuv3, texture);
-    return;
-  }
-  float t = (float)(tp2.y - tp1.y) / (float)(tp3.y - tp1.y);
-  int mid_x = (1 - t) * tp1.x + t * tp3.x;
-  Point<float> mid_uv((1 - t) * tuv1.x + t * tuv3.x, (1 - t) * tuv1.y + t * tuv3.y);
-  drawTrapezoid(tp1.y, tp1.x, tuv1, tp1.x, tuv1, tp2.y, mid_x, mid_uv, tp2.x, tuv2, texture);
-  drawTrapezoid(tp2.y, mid_x, mid_uv, tp2.x, tuv2, tp3.y, tp3.x, tuv3, tp3.x, tuv3, texture);
-}
-
-void Renderer::drawTrapezoid(int top, int top_left,
-                             const Color& left_top_color, int top_right,
-                             const Color& right_top_color, int bottom,
-                             int bottom_left, const Color& left_bottom_color,
-                             int bottom_right,
-                             const Color& right_bottom_color) {
-  for(int cy = top; cy <= bottom; cy++) {
-    float t = (float)(cy - top) / (float)(bottom - top);
-    Color left_mixed_color{
-        .r = (unsigned char)((1 - t) * left_top_color.r + t * left_bottom_color.r),
-        .g = (unsigned char)((1 - t) * left_top_color.g + t * left_bottom_color.g),
-        .b = (unsigned char)((1 - t) * left_top_color.b + t * left_bottom_color.b)};
-    Color right_mixed_color{
-        .r = (unsigned char)((1 - t) * right_top_color.r + t * right_bottom_color.r),
-        .g = (unsigned char)((1 - t) * right_top_color.g + t * right_bottom_color.g),
-        .b = (unsigned char)((1 - t) * right_top_color.b + t * right_bottom_color.b)};
-    int left_x = (top_left * bottom + bottom_left * cy - top_left * cy -
-                  bottom_left * top) /
-                 (bottom - top);
-    int right_x = (top_right * bottom + bottom_right * cy - top_right * cy -
-                   bottom_right * top) /
-                  (bottom - top);
-    drawLine(Point<int>{left_x, cy}, left_mixed_color, Point<int>{right_x, cy}, right_mixed_color);
-  }
-}
-
-void Renderer::drawTrapezoid(
-    int top, int top_left, const Point<float>& left_top_uv, int top_right,
-    const Point<float>& right_top_uv, int bottom, int bottom_left,
-    const Point<float>& left_bottom_uv, int bottom_right,
-    const Point<float>& right_bottom_uv, SDL_Surface* texture) {
-  for(int cy = top; cy <= bottom; cy++) {
-    float t = (float)(cy - top) / (float)(bottom - top);
-    Point<float> left_mixed_uv((1 - t) * left_top_uv.x + t * left_bottom_uv.x,
-                               (1 - t) * left_top_uv.y + t * left_bottom_uv.y);
-    Point<float> right_mixed_uv((1 - t) * right_top_uv.x + t * right_bottom_uv.x,
-                               (1 - t) * right_top_uv.y + t * right_bottom_uv.y);
-    int left_x = (top_left * bottom + bottom_left * cy - top_left * cy -
-                  bottom_left * top) /
-                 (bottom - top);
-    int right_x = (top_right * bottom + bottom_right * cy - top_right * cy -
-                   bottom_right * top) /
-                  (bottom - top);
-    drawLine(Point<int>{left_x, cy}, left_mixed_uv, Point<int>{right_x, cy}, right_mixed_uv, texture);
-  }
+float Renderer::caculateArea(float a_x, float a_y, float b_x, float b_y,
+                             float c_x, float c_y) {
+  float area = (a_x - c_x) * (b_y - c_y) - (a_y - c_y) * (b_x - c_x);
+  return std::fabs(area);
 }
 
 }  // namespace sf

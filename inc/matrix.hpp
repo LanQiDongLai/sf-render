@@ -1,5 +1,6 @@
 #pragma once
 #include <cstring>
+#include <stdexcept>
 
 #include "vector.hpp"
 
@@ -39,7 +40,7 @@ class Matrix {
     for(int i = 0; i < N; i++) {
       res.data[i] = 0;
       for(int k = 0; k < N; k++) {
-        res.data[i] += data[i][k] * vec[j];
+        res.data[i] += data[i][k] * vec[k];
       }
     }
     return res;
