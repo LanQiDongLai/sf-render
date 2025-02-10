@@ -12,6 +12,7 @@ namespace sf {
 class Renderer {
  public:
   Renderer(SDL_Surface* surface);
+  void clearColor(const Vector<float, 3>& color);
   void setViewport(int x, int y, int w, int h);
   void setTransform(const Matrix<float, 4>& matrix);
   void fillRect(const Vertex& left_top, const Vertex& right_bottom,

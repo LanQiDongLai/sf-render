@@ -11,6 +11,16 @@ namespace sf {
 
 Renderer::Renderer(SDL_Surface* surface) { surface_ = surface; }
 
+void Renderer::clearColor(const Vector<float, 3>& color) {
+  Uint32 *pixels = static_cast<Uint32 *>(surface_->pixels);
+  for(int i = 0; i < surface_->h; i++) {
+    for(int j = 0; j < surface_->w; j++) {
+      pixels[i * surface_->w + j] = SDL_MapRGB(surface_->format, 255 * color[0],
+                                               255 * color[1], 255 * color[2]);
+    }
+  }
+}
+
 void Renderer::setViewport(int x, int y, int w, int h) {
   viewport_transform[0][0] = w / 2.;
   viewport_transform[1][1] = -h / 2.;

@@ -91,6 +91,12 @@ int main() {
         is_close = true;
       }
     }
+    sf::Vector<float, 3> color;
+    color[0] = 0.f;
+    color[1] = 0.f;
+    color[2] = 0.f;
+    renderer.clearColor(color);
+
     sf::Matrix<float, 4> transform;
 
     sf::Vector<float, 3> vec;
