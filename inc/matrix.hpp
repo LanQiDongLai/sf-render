@@ -23,7 +23,7 @@ class Matrix {
     std::memmove(data, matrix.data, N * N * sizeof(T));
     return *this;
   }
-  Matrix operator*(const Matrix<T, N>& other) {
+  Matrix operator*(const Matrix<T, N>& other) const {
     Matrix<T, N> res;
     for (int i = 0; i < N; i++) {
       for (int j = 0; j < N; j++) {
@@ -35,7 +35,7 @@ class Matrix {
     }
     return res;
   }
-  Vector<T, N> operator*(const Vector<T, N>& vec) {
+  Vector<T, N> operator*(const Vector<T, N>& vec) const {
     Vector<T, N> res;
     for(int i = 0; i < N; i++) {
       res.data[i] = 0;
@@ -45,7 +45,7 @@ class Matrix {
     }
     return res;
   }
-  Matrix inverse() {
+  Matrix inverse() const {
     Matrix inv;
     T aug[N][2 * N];
 

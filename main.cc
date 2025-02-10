@@ -3,8 +3,10 @@
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 #include <cstdio>
+#include <chrono>
 
 #include "renderer.h"
+#include "transform.hpp"
 
 int main() {
   SDL_Init(SDL_INIT_EVERYTHING);
@@ -16,17 +18,17 @@ int main() {
   SDL_Surface* texture = SDL_LoadBMP("./img/sample.bmp");
   sf::Renderer renderer(surface);
   renderer.setViewport(0, 0, 800, 600);
-  sf::Matrix<float, 4> transform;
+
+  sf::Matrix<float, 4> projection;
   float n = -0.9f;
   float f = -100.f;
-  transform[0][0] = n;
-  transform[1][1] = n;
-  transform[2][2] = n + f;
-  transform[2][3] = -n * f;
-  transform[3][3] = 0.f;
-  transform[3][2] = 1.f;
+  projection[0][0] = n;
+  projection[1][1] = n;
+  projection[2][2] = n + f;
+  projection[2][3] = -n * f;
+  projection[3][3] = 0.f;
+  projection[3][2] = 1.f;
 
-  renderer.setTransform(transform);
   sf::Vertex v1;
   v1.position[0] = -0.5f;
   v1.position[1] = -0.5f;
@@ -79,16 +81,30 @@ int main() {
   v4.texcoord[0] = 1.f;
   v4.texcoord[1] = 1.f;
 
-  renderer.fillTriangle(v1, v2, v3, texture);
-  renderer.fillTriangle(v3, v2, v4, texture);
   bool is_close = false;
   SDL_Event event;
+  auto current = std::chrono::system_clock::now();
+  auto last = std::chrono::system_clock::now();
   while (!is_close) {
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) {
         is_close = true;
       }
     }
+    sf::Matrix<float, 4> transform;
+
+    sf::Vector<float, 3> vec;
+    vec[0] = 2.f;
+    vec[1] = 1.f;
+    vec[2] = 1.f;
+  
+    current = std::chrono::system_clock::now();
+    std::chrono::duration<double, std::milli> duration = current - last;
+    transform = sf::Transform::rotate<float>(transform, duration.count() / 1000.f, vec);
+
+    renderer.setTransform(projection * transform);
+    renderer.fillTriangle(v1, v2, v3, texture);
+    renderer.fillTriangle(v3, v2, v4, texture);
     SDL_UpdateWindowSurface(window);
   }
   SDL_DestroyWindow(window);
