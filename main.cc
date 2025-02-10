@@ -99,6 +99,13 @@ int main() {
 
     sf::Matrix<float, 4> transform;
 
+    sf::Vector<float, 3> vec2;
+    vec2[0] = 0.f;
+    vec2[1] = 0.f;
+    vec2[2] = -2.f;
+
+    transform = sf::Transform::translate<float>(transform, vec2);
+
     sf::Vector<float, 3> vec;
     vec[0] = 2.f;
     vec[1] = 1.f;

@@ -187,10 +187,10 @@ void Renderer::fillTriangle(const Vertex& p1, const Vertex& p2,
   screen_p3[2] /= screen_p3[3];
   screen_p3[3] /= screen_p3[3];
 
-  float top = std::min(std::min(screen_p1[1], screen_p2[1]), screen_p3[1]);
-  float bottom = std::max(std::max(screen_p1[1], screen_p2[1]), screen_p3[1]);
-  float left = std::min(std::min(screen_p1[0], screen_p2[0]), screen_p3[0]);
-  float right = std::max(std::max(screen_p1[0], screen_p2[0]), screen_p3[0]);
+  float top = std::max(std::min(std::min(screen_p1[1], screen_p2[1]), screen_p3[1]), 0.f);
+  float bottom = std::min(std::max(std::max(screen_p1[1], screen_p2[1]), screen_p3[1]), (float)surface_->h);
+  float left = std::max(std::min(std::min(screen_p1[0], screen_p2[0]), screen_p3[0]), 0.f);
+  float right = std::min(std::max(std::max(screen_p1[0], screen_p2[0]), screen_p3[0]), (float)surface_->w);
 
   float area = caculateArea(screen_p1[0], screen_p1[1], screen_p2[0],
                             screen_p2[1], screen_p3[0], screen_p3[1]);
