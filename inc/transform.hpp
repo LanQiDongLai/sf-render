@@ -11,7 +11,7 @@ Matrix<T, 4> translate(const Matrix<T, 4>& mat, const Vector<T, 3>& vec) {
   translate_mat[0][3] = vec[0];
   translate_mat[1][3] = vec[1];
   translate_mat[2][3] = vec[2];
-  return mat * translate_mat;
+  return translate_mat * mat;
 }
 template <class T>
 Matrix<T, 4> rotate(const Matrix<T, 4>& mat, float angle,
@@ -50,7 +50,7 @@ Matrix<T, 4> rotate(const Matrix<T, 4>& mat, float angle,
   rotate_mat[3][2] = 0;
   rotate_mat[3][3] = 1;
 
-  return mat * rotate_mat;
+  return rotate_mat * mat;
 }
 template <class T>
 Matrix<T, 4> scale(const Matrix<float, 4>& mat, const Vector<T, 3>& vec) {
@@ -58,7 +58,7 @@ Matrix<T, 4> scale(const Matrix<float, 4>& mat, const Vector<T, 3>& vec) {
   scale_mat[0][0] = vec[0];
   scale_mat[1][1] = vec[1];
   scale_mat[2][2] = vec[2];
-  return mat * scale_mat;
+  return scale_mat * mat;
 }
 
 }  // namespace Transform
